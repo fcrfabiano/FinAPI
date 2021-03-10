@@ -5,6 +5,7 @@ const app = express();
 
 app.use(express.json());
 
+// Array para Armazenar as Contas
 const customers = [];
 
 /**
@@ -14,7 +15,7 @@ const customers = [];
  * statement []
  */
 
-//Middleware
+//Middleware Verificador de Conta Existente
 function verifyIfExistsAccountCPF(request, response, next) {
     const { cpf } = request.headers;
 
@@ -24,12 +25,15 @@ function verifyIfExistsAccountCPF(request, response, next) {
         return response.status(400).send({ error: "Customer not Found!" });
     }
 
+    // Retorna a Conta para recuperar na Rota
     request.customer = customer;
 
     return next();
 }
 
+// Função para Retonar o Balanço
 function getBalance(statement) {
+    // Reduce serve para somar os Débitos e Créditos da conta
     const balance = statement.reduce((acc, operation) => {
         if(operation.type === 'credit') {
             return acc + operation.amount;
@@ -41,6 +45,7 @@ function getBalance(statement) {
     return balance;
 }
 
+// Cria uma Conta
 app.post("/account", (request, response) => {
     const { cpf, name } = request.body;
 
@@ -62,12 +67,14 @@ app.post("/account", (request, response) => {
     return response.status(201).send();
 });
 
+// Exibe o Extrato
 app.get("/statement/", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
 
     return response.json(customer.statement);
 });
 
+// Depósito
 app.post("/deposit", verifyIfExistsAccountCPF, (request, response) => {
     const { description, amount } = request.body;
 
@@ -85,6 +92,7 @@ app.post("/deposit", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(201).send();
 });
 
+// Saque
 app.post("/withdraw", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
     const { amount } = request.body;
@@ -106,6 +114,7 @@ app.post("/withdraw", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(201).send();
 });
 
+// Retorna o Extrato pela Data
 app.get("/statement/date", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
     const { date } = request.query;
@@ -121,6 +130,7 @@ app.get("/statement/date", verifyIfExistsAccountCPF, (request, response) => {
     return response.json(statement);
 });
 
+// Atualiza o Nome de uma Conta
 app.put("/account", verifyIfExistsAccountCPF, (request, response) => {
     const { name } = request.body;
     const { customer } = request;
@@ -130,12 +140,14 @@ app.put("/account", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(201).send();
 });
 
+// Retorna uma Conta
 app.get("/account", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
 
     return response.json(customer);
 });
 
+// Deleta uma conta em Específico
 app.delete("/account", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
 
@@ -145,6 +157,7 @@ app.delete("/account", verifyIfExistsAccountCPF, (request, response) => {
     return response.status(200).json(customers);
 });
 
+// Retorna o Balanço da Conta
 app.get("/balance", verifyIfExistsAccountCPF, (request, response) => {
     const { customer } = request;
 
